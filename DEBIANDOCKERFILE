@@ -1,0 +1,107 @@
+FROM debian:jessie as builder
+
+
+
+RUN  apt update
+RUN  apt install -y curl sudo dirmngr apt-transport-https lsb-release ca-certificates make
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+RUN apt install -y nodejs gcc g++ make
+
+RUN npm --version
+
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - 
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get install -y apt-transport-https
+RUN sudo apt-get update && sudo apt-get -y install yarn
+
+WORKDIR /usr/src/app
+COPY . /usr/src/app
+RUN yarn && \
+    yarn build && \
+    yarn install --production --ignore-scripts --prefer-offline
+
+
+FROM debian:jessie 
+
+
+
+RUN  apt update
+RUN  apt install -y curl sudo dirmngr apt-transport-https lsb-release ca-certificates make
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+RUN apt install -y nodejs gcc g++ make
+
+RUN npm --version
+
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - 
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get install -y apt-transport-https
+RUN sudo apt-get update && sudo apt-get -y install yarn
+
+
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+
+COPY --from=builder /usr/src/app/dist /usr/src/app/dist
+COPY --from=builder /usr/src/app/node_modules /usr/src/app/node_modules
+COPY package.json /usr/src/app
+COPY index.js /usr/src/app
+
+RUN apt install -y openssh-client sshpass && \
+    mkdir ~/.ssh && \
+    echo '#!/usr/bin/env sh' >> /entrypoint.sh && \
+    echo 'ssh-keyscan -H wetty-ssh >> ~/.ssh/known_hosts' >> /entrypoint.sh && \
+    echo 'node .' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+ARG USERNAME
+ARG PASS
+
+RUN adduser --quiet --disabled-password --shell /bin/bash --home /home/$USERNAME --gecos "$USERNAME" $USERNAME
+# set password
+RUN echo "$USERNAME:$PASS" | sudo chpasswd
+
+
+EXPOSE 3000 
+
+
+RUN apt-get install -y mysql-client
+
+RUN apt install -y dnsutils
+
+RUN apt-get install -y  postgresql-client
+
+#RUN apt-get install -y  redis
+RUN apt-get install -y redis-tools
+
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+#RUN echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+RUN  apt update
+RUN apt install -y dirmngr gnupg apt-transport-https software-properties-common ca-certificates curl wget 
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-3.2.asc | sudo apt-key add -
+RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.2 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+RUN apt-get update
+RUN apt-get install -y mongodb-org
+
+
+RUN printf "deb http://http.debian.net/debian oldstable main" > /etc/apt/sources.list
+
+
+
+
+RUN apt update
+RUN apt-get install -y -t oldstable openjdk-8-jdk
+
+
+RUN echo "deb http://www.apache.org/dist/cassandra/debian 22x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+#RUN curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+RUN apt update
+RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA
+RUN apt update
+RUN apt-get install -y cassandra --force-yes
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+CMD ["mysql"]
+
+# cassendra

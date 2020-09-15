@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wetty
+  namespace: wetty
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wetty
+      role: terminal
+  template:
+    metadata:
+      labels:
+        app: wetty
+        role: terminal
+    spec:
+      # serviceAccountName: admin-user
+      containers:
+      - name: wetty
+        image: zeromsi/wetty
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 3000
