@@ -1,21 +1,44 @@
-FROM node:dubnium-alpine as builder
-RUN apk add -U build-base python
+FROM debian:jessie as builder
+
+
+
+RUN  apt update
+RUN  apt install -y curl sudo dirmngr apt-transport-https lsb-release ca-certificates make
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+RUN apt install -y nodejs gcc g++ make
+
+RUN npm --version
+
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - 
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get install -y apt-transport-https
+RUN sudo apt-get update && sudo apt-get -y install yarn
+
 WORKDIR /usr/src/app
 COPY . /usr/src/app
 RUN yarn && \
     yarn build && \
     yarn install --production --ignore-scripts --prefer-offline
 
-FROM node:dubnium-alpine3.10
-LABEL maintainer="butlerx@notthe.cloud"
-RUN apk add -U build-base python
-RUN apk --no-cache update \
-    && apk --no-cache add openjdk8-jre
 
-RUN apk add --update --no-cache ca-certificates openjdk8 python
+FROM debian:jessie 
 
-ENV CASSANDRA_VERSION 3.11.8
-ENV CASSANDRA_HOME /abc/cassandra
+
+
+RUN  apt update
+RUN  apt install -y curl sudo dirmngr apt-transport-https lsb-release ca-certificates make
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+RUN apt install -y nodejs gcc g++ make
+
+RUN npm --version
+
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - 
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get install -y apt-transport-https
+RUN sudo apt-get update && sudo apt-get -y install yarn
+
 
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
@@ -24,44 +47,56 @@ COPY --from=builder /usr/src/app/dist /usr/src/app/dist
 COPY --from=builder /usr/src/app/node_modules /usr/src/app/node_modules
 COPY package.json /usr/src/app
 COPY index.js /usr/src/app
-RUN apk add -U openssh-client sshpass && \
+
+RUN apt install -y openssh-client sshpass && \
     mkdir ~/.ssh && \
     echo '#!/usr/bin/env sh' >> /entrypoint.sh && \
     echo 'ssh-keyscan -H wetty-ssh >> ~/.ssh/known_hosts' >> /entrypoint.sh && \
     echo 'node .' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
-
-RUN apk add -U mysql-client
-
-RUN apk update \
-    apk add --no-cache mongodb mongodb-tools
-
-VOLUME /data/db
-
-
-COPY run.sh /root
-
-
-RUN apk add  postgresql-client
-
-RUN apk --update add redis
-
-EXPOSE 3000 27017 28017 7000 7001 7199 9042 9160 
-
-
 ARG USERNAME
 ARG PASS
 
-RUN adduser -D -h /home/$USERNAME -s /bin/sh $USERNAME && \
-    ( echo "$USERNAME:$PASS" | chpasswd )
+RUN adduser --quiet --disabled-password --shell /bin/bash --home /home/$USERNAME --gecos "$USERNAME" $USERNAME
+# set password
+RUN echo "$USERNAME:$PASS" | sudo chpasswd
 
-RUN wget --output-document - http://ftp.riken.jp/net/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz | tar zxvf - 
-#   mv apache-cassandra-$CASSANDRA_VERSION $CASSANDRA_HOME
-RUN mkdir /var/lib/cassandra /var/log/cassandra
-ENV PATH $PATH:$CASSANDRA_HOME/bin
 
-ENTRYPOINT [ "/entrypoint.sh","/root/run.sh" ]
-CMD ["mysql","mongod", "--bind_ip", "0.0.0.0","./cassandra", "-R", "-f" ]
+EXPOSE 3000 
 
-# cassendra
+
+# RUN apt-get install -y mysql-client
+
+# RUN apt install -y dnsutils
+
+# RUN apt-get install -y  postgresql-client
+
+# RUN apt-get install -y redis-tools
+
+# RUN  apt update
+# RUN apt install -y dirmngr gnupg apt-transport-https software-properties-common ca-certificates curl wget 
+# RUN wget -qO - https://www.mongodb.org/static/pgp/server-3.2.asc | sudo apt-key add -
+# RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.2 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+# RUN apt-get update
+# RUN apt-get install -y mongodb-org
+
+
+# RUN printf "deb http://http.debian.net/debian oldstable main" > /etc/apt/sources.list
+
+
+
+
+# RUN apt update
+# RUN apt-get install -y -t oldstable openjdk-8-jdk
+
+
+# RUN echo "deb http://www.apache.org/dist/cassandra/debian 22x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+# #RUN curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+# RUN apt update
+# RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA
+# RUN apt update
+# RUN apt-get install -y cassandra --force-yes
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+# CMD ["mysql"]
