@@ -66,37 +66,37 @@ RUN echo "$USERNAME:$PASS" | sudo chpasswd
 EXPOSE 3000 
 
 
-# RUN apt-get install -y mysql-client
+RUN apt-get install -y mysql-client
 
-# RUN apt install -y dnsutils
+RUN apt install -y dnsutils
 
-# RUN apt-get install -y  postgresql-client
+RUN apt-get install -y  postgresql-client
 
-# RUN apt-get install -y redis-tools
+RUN apt-get install -y redis-tools
 
-# RUN  apt update
-# RUN apt install -y dirmngr gnupg apt-transport-https software-properties-common ca-certificates curl wget 
-# RUN wget -qO - https://www.mongodb.org/static/pgp/server-3.2.asc | sudo apt-key add -
-# RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.2 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
-# RUN apt-get update
-# RUN apt-get install -y mongodb-org
-
-
-# RUN printf "deb http://http.debian.net/debian oldstable main" > /etc/apt/sources.list
+RUN  apt update
+RUN apt install -y dirmngr gnupg apt-transport-https software-properties-common ca-certificates curl wget 
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-3.2.asc | sudo apt-key add -
+RUN echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/3.2 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+RUN apt-get update
+RUN apt-get install -y mongodb-org
 
 
+RUN printf "deb http://http.debian.net/debian oldstable main" > /etc/apt/sources.list
 
 
-# RUN apt update
-# RUN apt-get install -y -t oldstable openjdk-8-jdk
 
 
-# RUN echo "deb http://www.apache.org/dist/cassandra/debian 22x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
-# #RUN curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
-# RUN apt update
-# RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA
-# RUN apt update
-# RUN apt-get install -y cassandra --force-yes
+RUN apt update
+RUN apt-get install -y -t oldstable openjdk-8-jdk
+
+
+RUN echo "deb http://www.apache.org/dist/cassandra/debian 22x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+#RUN curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+RUN apt update
+RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA
+RUN apt update
+RUN apt-get install -y cassandra --force-yes
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 # CMD ["mysql"]
