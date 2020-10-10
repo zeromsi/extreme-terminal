@@ -81,4 +81,6 @@ RUN apt-key adv --keyserver pool.sks-keyservers.net --recv-key A278B781FE4B2BDA
 RUN apt update
 RUN apt-get install -y cassandra --force-yes
 
+RUN apt update && apt install dnsutils -y
+
 CMD ["mysql"]
