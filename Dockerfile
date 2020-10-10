@@ -7,7 +7,8 @@ RUN mkdir ~/.ssh && \
 
 ARG USERNAME
 ARG PASS
-
+RUN echo $USERNAME 
+RUN echo $PASS 
 RUN adduser --quiet --disabled-password --shell /bin/bash --home /home/$USERNAME --gecos "$USERNAME" $USERNAME
 # set password
 RUN echo "$USERNAME:$PASS" | sudo chpasswd
